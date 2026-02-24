@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DndContext,
@@ -11,7 +11,11 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
-import { artworks, frameStructures, generateNarrative } from "@/data/mockData";
+import { frameStructures, generateNarrative } from "@/data/mockData";
+import { useArtworks, useTrackArtworkSelection } from "@/hooks/useArtworks";
+import { useSaveCuration } from "@/hooks/useCurations";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAuth } from "@/hooks/useAuth";
 import ArtworkThumbnail from "@/components/ArtworkThumbnail";
 import NarrativePanel from "@/components/NarrativePanel";
 import SortableArtwork from "@/components/SortableArtwork";
@@ -25,13 +29,25 @@ const CreateCuration = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [frameCount, setFrameCount] = useState(3);
   const [frameAssignments, setFrameAssignments] = useState<string[][]>([]);
+  const [curationTitle, setCurationTitle] = useState("");
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const { data: artworks = [], isLoading: artworksLoading } = useArtworks();
+  const { mutateAsync: saveCuration, isPending: saving } = useSaveCuration();
+  const { mutate: trackSelection } = useTrackArtworkSelection();
+  const { trackEvent } = useAnalytics();
+  const { user } = useAuth();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const toggleArtwork = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < MAX_SELECTION ? [...prev, id] : prev
-    );
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_SELECTION) return prev;
+      trackSelection(id);
+      trackEvent("artwork_selected", { artworkId: id });
+      return [...prev, id];
+    });
   };
 
   const goToAssign = () => {
@@ -60,6 +76,24 @@ const CreateCuration = () => {
   };
 
   const fullNarrative = generateNarrative(frameAssignments.flat());
+
+  const handleSaveCuration = async () => {
+    if (!user) return;
+    const title = curationTitle.trim() || `My Curation — ${new Date().toLocaleDateString()}`;
+    try {
+      await saveCuration({
+        title,
+        frames: frameAssignments.map((artIds, i) => ({
+          title: `Frame ${i + 1}`,
+          artworkIds: artIds,
+        })),
+      });
+      trackEvent("curation_saved");
+      setSavedSuccess(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pt-20">
@@ -110,17 +144,23 @@ const CreateCuration = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
             >
+              {artworksLoading ? (
+                <div className="flex h-48 items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
               <div className="mb-6 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {artworks.map((art) => (
                   <ArtworkThumbnail
                     key={art.id}
-                    artwork={art}
+                    artwork={art as any}
                     selected={selectedIds.includes(art.id)}
                     onClick={() => toggleArtwork(art.id)}
                     size="lg"
                   />
                 ))}
               </div>
+              )}
 
               {selectedIds.length > 0 && (
                 <div className="mt-8 flex items-center justify-between">
@@ -181,7 +221,7 @@ const CreateCuration = () => {
                           {artIds.map((artId) => {
                             const art = artworks.find((a) => a.id === artId);
                             if (!art) return null;
-                            return <SortableArtwork key={artId} artwork={art} />;
+                            return <SortableArtwork key={artId} artwork={art as any} />;
                           })}
                         </div>
                       </SortableContext>
@@ -233,17 +273,51 @@ const CreateCuration = () => {
                 ))}
               </div>
 
-              <div className="mt-8 flex gap-3">
-                <button
-                  onClick={() => setStep("assign")}
-                  className="rounded-sm border border-border px-6 py-2.5 font-body text-sm text-secondary-foreground transition-colors hover:bg-secondary"
-                >
-                  Back
-                </button>
-                <button className="flex items-center gap-2 rounded-sm bg-primary px-6 py-2.5 font-body text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                  <Check className="h-4 w-4" />
-                  Save Curation
-                </button>
+              {/* Title input + Save */}
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Name your curation (optional)"
+                    value={curationTitle}
+                    onChange={(e) => setCurationTitle(e.target.value)}
+                    className="flex-1 rounded-sm border border-border/60 bg-card px-4 py-2 font-body text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep("assign")}
+                    className="rounded-sm border border-border px-6 py-2.5 font-body text-sm text-secondary-foreground transition-colors hover:bg-secondary"
+                  >
+                    Back
+                  </button>
+
+                  {savedSuccess ? (
+                    <div className="flex items-center gap-2 rounded-sm bg-accent px-6 py-2.5 font-body text-sm font-medium text-accent-foreground">
+                      <Check className="h-4 w-4" />
+                      Saved!
+                    </div>
+                  ) : user ? (
+                    <button
+                      onClick={handleSaveCuration}
+                      disabled={saving}
+                      className="flex items-center gap-2 rounded-sm bg-primary px-6 py-2.5 font-body text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      {saving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                      {saving ? "Saving…" : "Save Curation"}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-sm border border-border/60 bg-card/60 px-6 py-2.5 font-body text-sm text-muted-foreground">
+                      Sign in to save your curation
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

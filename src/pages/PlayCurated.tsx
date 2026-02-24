@@ -13,10 +13,13 @@ import {
   arrayMove,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Save, Check, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { curatedWalls, getArtworkById, generateNarrative } from "@/data/mockData";
 import type { Frame } from "@/data/mockData";
+import { useSaveFrameRemix } from "@/hooks/useCurations";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAuth } from "@/hooks/useAuth";
 import FrameCard from "@/components/FrameCard";
 import ArtworkThumbnail from "@/components/ArtworkThumbnail";
 import NarrativePanel from "@/components/NarrativePanel";
@@ -27,6 +30,11 @@ const PlayCurated = () => {
   const [frames, setFrames] = useState<Frame[]>(wall.frames);
   const [selectedFrame, setSelectedFrame] = useState<Frame | null>(null);
   const [editingArtworks, setEditingArtworks] = useState<string[]>([]);
+  const [remixSaved, setRemixSaved] = useState(false);
+
+  const { mutateAsync: saveRemix, isPending: savingRemix } = useSaveFrameRemix();
+  const { trackEvent } = useAnalytics();
+  const { user } = useAuth();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -55,6 +63,8 @@ const PlayCurated = () => {
   const openFrame = (frame: Frame) => {
     setSelectedFrame(frame);
     setEditingArtworks([...frame.artworkIds]);
+    setRemixSaved(false);
+    trackEvent("curation_viewed", { curationId: frame.id });
   };
 
   const saveFrame = () => {
@@ -65,6 +75,23 @@ const PlayCurated = () => {
       )
     );
     setSelectedFrame(null);
+  };
+
+  const saveRemixToSupabase = async () => {
+    if (!selectedFrame || !user) return;
+    try {
+      await saveRemix({
+        originalFrameId: selectedFrame.id,
+        title: `${selectedFrame.title} (remix)`,
+        artworkIds: editingArtworks,
+      });
+      trackEvent("frame_remixed", { curationId: selectedFrame.id });
+      setRemixSaved(true);
+      // Also update local state
+      saveFrame();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const allArtworkIds = frames.flatMap((f) => f.artworkIds);
@@ -156,12 +183,38 @@ const PlayCurated = () => {
                 </p>
               </div>
 
-              <button
-                onClick={saveFrame}
-                className="rounded-sm bg-primary px-6 py-2.5 font-body text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Save Changes
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={saveFrame}
+                  className="rounded-sm border border-border px-4 py-2.5 font-body text-sm text-secondary-foreground transition-colors hover:bg-secondary"
+                >
+                  Apply Locally
+                </button>
+
+                {remixSaved ? (
+                  <div className="flex items-center gap-2 rounded-sm bg-accent px-6 py-2.5 font-body text-sm font-medium text-accent-foreground">
+                    <Check className="h-4 w-4" />
+                    Remix Saved!
+                  </div>
+                ) : user ? (
+                  <button
+                    onClick={saveRemixToSupabase}
+                    disabled={savingRemix}
+                    className="flex items-center gap-2 rounded-sm bg-primary px-6 py-2.5 font-body text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {savingRemix ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    {savingRemix ? "Saving…" : "Save Remix"}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-sm border border-border/60 bg-card/60 px-6 py-2.5 font-body text-sm text-muted-foreground">
+                    Sign in to save remix
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
