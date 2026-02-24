@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 8% 7%;
+    --foreground: 40 25% 92%;
+
+    --card: 30 6% 11%;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 30 6% 11%;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 38 50% 58%;
+    --primary-foreground: 30 8% 7%;
+
+    --secondary: 30 5% 16%;
+    --secondary-foreground: 40 15% 85%;
+
+    --muted: 30 4% 18%;
+    --muted-foreground: 30 8% 52%;
+
+    --accent: 145 14% 42%;
+    --accent-foreground: 40 20% 92%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 40 20% 95%;
+
+    --border: 30 6% 20%;
+    --input: 30 6% 20%;
+    --ring: 38 50% 58%;
+
+    --radius: 0.375rem;
+
+    --sidebar-background: 30 6% 9%;
+    --sidebar-foreground: 40 15% 80%;
+    --sidebar-primary: 38 50% 58%;
+    --sidebar-primary-foreground: 30 8% 7%;
+    --sidebar-accent: 30 5% 14%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 30 6% 18%;
+    --sidebar-ring: 38 50% 58%;
+
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    --gold-glow: 0 0 40px hsl(38 50% 58% / 0.15);
+    --shadow-frame: 0 4px 30px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(38 50% 58% / 0.08);
+    --shadow-card: 0 8px 40px hsl(0 0% 0% / 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-family: var(--font-display);
+  }
+
+  .text-body {
+    font-family: var(--font-body);
+  }
+
+  .gold-glow {
+    box-shadow: var(--gold-glow);
+  }
+
+  .shadow-frame {
+    box-shadow: var(--shadow-frame);
+  }
+
+  .shadow-card-deep {
+    box-shadow: var(--shadow-card);
+  }
+
+  .frame-border {
+    border: 1px solid hsl(38 50% 58% / 0.2);
+  }
+
+  .gallery-gradient {
+    background: linear-gradient(180deg, hsl(30 8% 7% / 0) 0%, hsl(30 8% 7%) 100%);
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(135deg, hsl(38 50% 68%), hsl(38 60% 48%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
