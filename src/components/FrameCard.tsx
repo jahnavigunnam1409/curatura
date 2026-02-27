@@ -46,9 +46,18 @@ const FrameCard = ({ id, title, artworks, onClick, sortable = false }: FrameCard
         {artworks.map((artwork) => (
           <div
             key={artwork.id}
-            className="h-20 flex-1 rounded-sm shadow-frame"
-            style={{ background: artwork.color }}
-          />
+            className="relative h-20 flex-1 overflow-hidden rounded-sm shadow-frame"
+            style={!artwork.imageUrl ? { background: artwork.color } : undefined}
+          >
+            {artwork.imageUrl && (
+              <img
+                src={artwork.imageUrl}
+                alt={artwork.title}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+          </div>
         ))}
       </div>
 

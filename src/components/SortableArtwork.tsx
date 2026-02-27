@@ -27,9 +27,18 @@ const SortableArtwork = ({ artwork }: SortableArtworkProps) => {
     >
       <div className="flex flex-col gap-1.5">
         <div
-          className="h-32 w-24 rounded-sm shadow-frame"
-          style={{ background: artwork.color }}
-        />
+          className="relative h-32 w-24 overflow-hidden rounded-sm shadow-frame"
+          style={!artwork.imageUrl ? { background: artwork.color } : undefined}
+        >
+          {artwork.imageUrl && (
+            <img
+              src={artwork.imageUrl}
+              alt={artwork.title}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+        </div>
         <p className="max-w-[96px] truncate font-display text-xs text-card-foreground">
           {artwork.title}
         </p>

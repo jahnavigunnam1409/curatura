@@ -37,11 +37,21 @@ const ArtworkThumbnail = ({
             ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
             : "ring-1 ring-border/40"
         }`}
-        style={{ background: artwork.color }}
+        style={!artwork.imageUrl ? { background: artwork.color } : undefined}
       >
+        {/* Real image */}
+        {artwork.imageUrl && (
+          <img
+            src={artwork.imageUrl}
+            alt={artwork.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+
         {/* Artwork title overlay */}
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <span className="font-display text-xs text-foreground">{artwork.title}</span>
+        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="font-display text-xs text-white leading-tight">{artwork.title}</span>
         </div>
 
         {/* Selection check */}
