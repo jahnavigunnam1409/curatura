@@ -19,7 +19,7 @@ import {
   Radar,
 } from "recharts";
 import type { LucideIcon } from "lucide-react";
-import { Image, Palette, Activity, Layers, Users, TrendingUp, RefreshCw } from "lucide-react";
+import { Image, Palette, Activity, Layers, Users, TrendingUp, RefreshCw, Info } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCollectionStats, useActivityStats, useCurationCount } from "@/hooks/useStats";
 
@@ -103,16 +103,26 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }
 );
 
 // ── Chart card wrapper ────────────────────────────────────────
-const ChartCard = ({ title, subtitle, children }: {
-  title: string; subtitle?: string; children: React.ReactNode;
+const ChartCard = ({ title, subtitle, description, children }: {
+  title: string; subtitle?: string; description?: string; children: React.ReactNode;
 }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
     className="rounded-sm border border-border/50 bg-card p-6 shadow-card-deep"
   >
-    <div className="mb-5">
-      <h3 className="font-display text-base font-medium text-card-foreground">{title}</h3>
-      {subtitle && <p className="mt-0.5 font-body text-xs text-muted-foreground">{subtitle}</p>}
+    <div className="mb-5 flex items-start justify-between gap-3">
+      <div>
+        <h3 className="font-display text-base font-medium text-card-foreground">{title}</h3>
+        {subtitle && <p className="mt-0.5 font-body text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      {description && (
+        <div className="group relative mt-0.5 shrink-0">
+          <Info className="h-3.5 w-3.5 cursor-pointer text-muted-foreground/50 transition-colors group-hover:text-[#c9a96e]" />
+          <div className="pointer-events-none absolute right-0 top-6 z-50 w-56 rounded-sm border border-border/60 bg-card/95 px-3 py-2.5 text-xs shadow-xl backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <p className="font-body text-muted-foreground leading-relaxed">{description}</p>
+          </div>
+        </div>
+      )}
     </div>
     {children}
   </motion.div>
@@ -181,7 +191,7 @@ export default function Stats() {
 
         {/* Activity area chart — full width */}
         <div className="mb-6">
-          <ChartCard title="Activity Over the Last 14 Days" subtitle="Total interaction events per day">
+          <ChartCard title="Activity Over the Last 14 Days" subtitle="Total interaction events per day" description="Shows the total number of user interactions logged each day over the past 2 weeks. Peaks indicate high-traffic days with more artwork selections, curation saves, or frame rearrangements.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : (
@@ -209,7 +219,7 @@ export default function Stats() {
         <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
           {/* Engagement funnel as horizontal bar */}
-          <ChartCard title="User Journey Funnel" subtitle="From viewing frames → saving a curation">
+          <ChartCard title="User Journey Funnel" subtitle="From viewing frames → saving a curation" description="Traces how many users progress through each stage — from viewing artworks to saving a final curation. Narrowing bars reveal exactly where visitors drop off in the experience.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.funnelSteps.some(s => s.value > 0) ? (
@@ -235,7 +245,7 @@ export default function Stats() {
           </ChartCard>
 
           {/* Event type pie */}
-          <ChartCard title="Event Type Breakdown" subtitle="Which actions visitors take most">
+          <ChartCard title="Event Type Breakdown" subtitle="Which actions visitors take most" description="Proportional split of every interaction type recorded — selections, deselections, frame choices, rearrangements, and saves. Larger slices mean that action is performed more frequently.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.events.length ? (
@@ -267,7 +277,7 @@ export default function Stats() {
 
         {/* Visual artwork grid */}
         <div className="mb-6">
-          <ChartCard title="Most Selected Artworks" subtitle="Top 12 — rank badge / hover shows selections & retention">
+          <ChartCard title="Most Selected Artworks" subtitle="Top 12 — rank badge / hover shows selections & retention" description="Visual grid of the 12 most-picked artworks, ranked by total selection count. Hover any thumbnail to see its exact selection count and the percentage of users who kept it in their final curation.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.topArtworks.length ? (
@@ -318,7 +328,7 @@ export default function Stats() {
         {/* Theme popularity + retention rate — 2 col */}
         <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-          <ChartCard title="Theme Popularity by Selections" subtitle="Which themes users gravitate towards when curating">
+          <ChartCard title="Theme Popularity by Selections" subtitle="Which themes users gravitate towards when curating" description="Counts how many artworks from each thematic wall were selected across all user sessions. Taller bars indicate themes — like Horizon or Introspection — that resonate most with visitors.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.themePopularity.length ? (
@@ -340,7 +350,7 @@ export default function Stats() {
             )}
           </ChartCard>
 
-          <ChartCard title="Artwork Retention Rate" subtitle="% of selections not immediately reversed (kept in curation)">
+          <ChartCard title="Artwork Retention Rate" subtitle="% of selections not immediately reversed (kept in curation)" description="Percentage of times each artwork was selected and then kept rather than deselected. A high retention score means the artwork consistently earns its place in a visitor's final curation.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.topArtworks.length ? (
@@ -372,7 +382,7 @@ export default function Stats() {
         <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
           {/* Frame count preference pie */}
-          <ChartCard title="Frame Count Preference" subtitle="How many frames users choose when building their wall">
+          <ChartCard title="Frame Count Preference" subtitle="How many frames users choose when building their wall" description="Pie chart of how many frames visitors select when composing their gallery wall (e.g. 2, 3, or 4 frames). Larger slices indicate the most popular layout size chosen.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.frameCountChart.length ? (
@@ -399,7 +409,7 @@ export default function Stats() {
           </ChartCard>
 
           {/* Most rearranged frames */}
-          <ChartCard title="Most Rearranged Frames" subtitle="Frames dragged most often during wall customisation">
+          <ChartCard title="Most Rearranged Frames" subtitle="Frames dragged most often during wall customisation" description="Ranks each frame position by how many times it was dragged to a new spot on the wall. Frequent moves for a frame suggest users are actively experimenting with its placement in the layout.">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
             ) : activity?.mostMovedFrames.length ? (
@@ -431,7 +441,7 @@ export default function Stats() {
         {/* Three pies row */}
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-          <ChartCard title="Artworks by Theme" subtitle="Collection breakdown across 6 thematic walls">
+          <ChartCard title="Artworks by Theme" subtitle="Collection breakdown across 6 thematic walls" description="Static distribution of all 48 artworks across the 6 thematic walls in the collection. Each slice shows how many artworks belong to that theme, revealing how evenly the collection is curated.">
             {collection?.themes.length ? (
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
@@ -453,7 +463,7 @@ export default function Stats() {
             ) : <EmptyState message="Loading…" />}
           </ChartCard>
 
-          <ChartCard title="Aspect Ratio Mix" subtitle="Portrait / landscape / square split">
+          <ChartCard title="Aspect Ratio Mix" subtitle="Portrait / landscape / square split" description="Donut chart of the portrait, landscape, and square artwork split across the entire collection. Useful for understanding the visual variety and orientation balance of the gallery.">
             {collection?.aspectRatios.length ? (
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
@@ -476,7 +486,7 @@ export default function Stats() {
             ) : <EmptyState message="Loading…" />}
           </ChartCard>
 
-          <ChartCard title="Artworks by Year" subtitle="Collection output across 2018 – 2022">
+          <ChartCard title="Artworks by Year" subtitle="Collection output across 2018 – 2022" description="Number of artworks in the collection produced in each year from 2018 to 2022. Shows how the collection is spread across the creative timeline and which years contributed the most works.">
             {collection?.byYear.length ? (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={collection.byYear} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -497,7 +507,7 @@ export default function Stats() {
 
         {/* Theme radar — full width */}
         <div className="mb-6">
-          <ChartCard title="Theme Radar" subtitle="Visual balance of the collection across all themes">
+          <ChartCard title="Theme Radar" subtitle="Visual balance of the collection across all themes" description="Spider chart overlaying all 6 themes to show collection balance at a glance. A symmetrical shape indicates an evenly distributed collection; spikes reveal dominant or underrepresented themes.">
             {collection?.themes.length ? (
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart cx="50%" cy="50%" outerRadius={100} data={collection.themes}>
