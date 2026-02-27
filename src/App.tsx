@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Index from "./pages/Index";
 import PlayCurated from "./pages/PlayCurated";
 import CreateCuration from "./pages/CreateCuration";
+import Stats from "./pages/Stats";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/play" element={<PlayCurated />} />
           <Route path="/create" element={<CreateCuration />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

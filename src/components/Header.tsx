@@ -14,6 +14,7 @@ const Header = () => {
     { path: "/", label: "Home" },
     { path: "/play", label: "Explore Curations" },
     { path: "/create", label: "Create" },
+    { path: "/stats", label: "Statistics" },
   ];
 
   // Close dropdown on outside click
