@@ -7,7 +7,8 @@ export type AnalyticsEvent =
   | "curation_saved"
   | "curation_viewed"
   | "wall_rearranged"
-  | "narrative_viewed";
+  | "narrative_viewed"
+  | "frame_count_chosen";
 
 interface TrackOptions {
   userId?: string;
@@ -18,10 +19,13 @@ interface TrackOptions {
 
 /**
  * Fire-and-forget analytics tracking.
- * Safe to call without awaiting — errors are silently ignored.
+ * Uses an untyped cast to bypass Supabase generated-type quirks on interaction_logs.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rawDb = supabase as any;
+
 export function track(event: AnalyticsEvent, options: TrackOptions = {}) {
-  supabase
+  rawDb
     .from("interaction_logs")
     .insert({
       event_type: event,
@@ -30,7 +34,7 @@ export function track(event: AnalyticsEvent, options: TrackOptions = {}) {
       curation_id: options.curationId ?? null,
       metadata: options.metadata ?? null,
     })
-    .then(({ error }) => {
+    .then(({ error }: { error: { message: string } | null }) => {
       if (error) console.warn("[analytics]", error.message);
     });
 }

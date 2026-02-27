@@ -42,7 +42,10 @@ const CreateCuration = () => {
 
   const toggleArtwork = (id: string) => {
     setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.includes(id)) {
+        trackEvent("artwork_deselected", { artworkId: id });
+        return prev.filter((x) => x !== id);
+      }
       if (prev.length >= MAX_SELECTION) return prev;
       trackSelection(id);
       trackEvent("artwork_selected", { artworkId: id });
@@ -51,6 +54,7 @@ const CreateCuration = () => {
   };
 
   const goToAssign = () => {
+    trackEvent("frame_count_chosen", { metadata: { frameCount, artworkCount: selectedIds.length } });
     // Distribute artworks evenly across frames
     const perFrame = Math.ceil(selectedIds.length / frameCount);
     const assignments: string[][] = [];
@@ -76,6 +80,11 @@ const CreateCuration = () => {
   };
 
   const fullNarrative = generateNarrative(frameAssignments.flat());
+
+  const goToNarrative = () => {
+    trackEvent("narrative_viewed", { metadata: { frameCount, artworkCount: frameAssignments.flat().length } });
+    setStep("narrative");
+  };
 
   const handleSaveCuration = async () => {
     if (!user) return;
@@ -238,7 +247,7 @@ const CreateCuration = () => {
                   Back
                 </button>
                 <button
-                  onClick={() => setStep("narrative")}
+                  onClick={goToNarrative}
                   className="flex items-center gap-2 rounded-sm bg-primary px-6 py-2.5 font-body text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   Generate Narrative

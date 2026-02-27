@@ -44,7 +44,16 @@ const PlayCurated = () => {
       setFrames((prev) => {
         const oldIdx = prev.findIndex((f) => f.id === active.id);
         const newIdx = prev.findIndex((f) => f.id === over.id);
-        return arrayMove(prev, oldIdx, newIdx);
+        const next = arrayMove(prev, oldIdx, newIdx);
+        trackEvent("wall_rearranged", {
+          metadata: {
+            movedFrame: active.id,
+            fromPosition: oldIdx,
+            toPosition: newIdx,
+            newOrder: next.map((f) => f.title),
+          },
+        });
+        return next;
       });
     }
   };

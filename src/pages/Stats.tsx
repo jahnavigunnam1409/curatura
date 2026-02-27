@@ -19,7 +19,8 @@ import {
   Radar,
 } from "recharts";
 import type { LucideIcon } from "lucide-react";
-import { Image, Palette, Activity, Layers } from "lucide-react";
+import { Image, Palette, Activity, Layers, Users, TrendingUp, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCollectionStats, useActivityStats, useCurationCount } from "@/hooks/useStats";
 
 // ── Colour palettes ───────────────────────────────────────────
@@ -38,7 +39,7 @@ const ASPECT_COLORS: Record<string, string> = {
   square:    "#4ade80",
 };
 
-// ── Shared tooltip ─────────────────────────────────────────────────
+// ── Shared tooltip ─────────────────────────────────────────────
 interface TooltipPayloadEntry { name?: string; value?: number; color?: string; fill?: string; }
 interface DarkTooltipProps { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string; }
 const DarkTooltip = ({ active, payload, label }: DarkTooltipProps) => {
@@ -89,6 +90,18 @@ const StatCard = ({ icon: Icon, label, value, sub, color }: {
   </motion.div>
 );
 
+// ── Section header ────────────────────────────────────────────
+const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+    className="mb-5 border-l-2 border-gold pl-4"
+    style={{ borderColor: "#c9a96e" }}
+  >
+    <h2 className="font-display text-lg font-medium text-card-foreground">{title}</h2>
+    {subtitle && <p className="mt-0.5 font-body text-xs text-muted-foreground">{subtitle}</p>}
+  </motion.div>
+);
+
 // ── Chart card wrapper ────────────────────────────────────────
 const ChartCard = ({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode;
@@ -114,11 +127,17 @@ const EmptyState = ({ message }: { message: string }) => (
 
 // ══════════════════════════════════════════════════════════════
 export default function Stats() {
+  const qc = useQueryClient();
   const { data: collection } = useCollectionStats();
   const { data: activity, isLoading: activityLoading } = useActivityStats();
   const { data: curationCount } = useCurationCount();
 
   const topTheme = collection?.themes.sort((a, b) => b.value - a.value)[0]?.name ?? "—";
+
+  const handleRefresh = () => {
+    qc.invalidateQueries({ queryKey: ["stats", "activity"] });
+    qc.invalidateQueries({ queryKey: ["stats", "curations"] });
+  };
 
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
@@ -127,103 +146,40 @@ export default function Stats() {
         {/* ── Page header ── */}
         <motion.div
           initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          className="mb-10 flex items-start justify-between"
         >
-          <h1 className="font-display text-4xl font-semibold tracking-wide gold-gradient-text">
-            Gallery Statistics
-          </h1>
-          <p className="mt-2 font-body text-sm text-muted-foreground">
-            Live insights into the Curatura collection and visitor activity.
-          </p>
+          <div>
+            <h1 className="font-display text-4xl font-semibold tracking-wide gold-gradient-text">
+              Gallery Statistics
+            </h1>
+            <p className="mt-2 font-body text-sm text-muted-foreground">
+              Live insights into the Curatura collection and all visitor interactions.
+            </p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            className="mt-2 flex items-center gap-2 rounded-sm border border-border/50 bg-card px-4 py-2 font-body text-xs text-muted-foreground transition hover:border-gold hover:text-gold"
+            style={{ "--tw-border-gold": "#c9a96e" } as React.CSSProperties}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
         </motion.div>
 
-        {/* ── Stat cards ── */}
-        <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard icon={Image}     label="Total Artworks"      value={collection?.total ?? 48}     color="#c9a96e" />
-          <StatCard icon={Activity}  label="Total Events"        value={activity?.totalEvents ?? 0}  color="#818cf8" sub="interaction logs" />
-          <StatCard icon={Layers}    label="Curations Saved"     value={curationCount ?? 0}          color="#4ade80" />
-          <StatCard icon={Palette}   label="Top Theme"           value={topTheme}                     color="#f472b6" sub={`${collection?.themes.find(t => t.name === topTheme)?.value ?? 0} artworks`} />
+        {/* ── 6 Stat cards ── */}
+        <div className="mb-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <StatCard icon={Image}      label="Total Artworks"  value={collection?.total ?? 48}          color="#c9a96e" />
+          <StatCard icon={Activity}   label="Total Events"    value={activity?.totalEvents ?? 0}        color="#818cf8" sub="interaction logs" />
+          <StatCard icon={Users}      label="Unique Users"    value={activity?.uniqueUsers ?? 0}        color="#38bdf8" sub="tracked sessions" />
+          <StatCard icon={Layers}     label="Curations Saved" value={curationCount ?? 0}                color="#4ade80" />
+          <StatCard icon={Palette}    label="Top Theme"       value={topTheme}                          color="#f472b6" sub={`${collection?.themes.find(t => t.name === topTheme)?.value ?? 0} artworks`} />
+          <StatCard icon={TrendingUp} label="Frame Remixes"   value={activity?.frameRemixes ?? 0}      color="#fb923c" sub="rearrangements" />
         </div>
 
-        {/* ── Row 1: Three pies ── */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* ══ SECTION 1: Live User Activity ══════════════════════ */}
+        <SectionHeader title="Live User Activity" subtitle="Real-time interaction logs from all visitors" />
 
-          {/* Theme distribution */}
-          <ChartCard title="Artworks by Theme" subtitle="Collection breakdown across 6 thematic walls">
-            {collection?.themes.length ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart>
-                  <Pie data={collection.themes} dataKey="value" nameKey="name"
-                    cx="50%" cy="50%" outerRadius={80} labelLine={false} label={PieLabel}>
-                    {collection.themes.map((entry) => (
-                      <Cell key={entry.name} fill={THEME_COLORS[entry.name] ?? PALETTE[0]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<DarkTooltip />} />
-                  <Legend
-                    formatter={(v) => (
-                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
-                    )}
-                    iconType="circle" iconSize={8}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : <EmptyState message="Loading…" />}
-          </ChartCard>
-
-          {/* Aspect ratio distribution */}
-          <ChartCard title="Aspect Ratio Mix" subtitle="Portrait / landscape / square split">
-            {collection?.aspectRatios.length ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart>
-                  <Pie data={collection.aspectRatios} dataKey="value" nameKey="name"
-                    cx="50%" cy="50%" innerRadius={50} outerRadius={85}
-                    paddingAngle={4} labelLine={false} label={PieLabel}>
-                    {collection.aspectRatios.map((entry) => (
-                      <Cell key={entry.name} fill={ASPECT_COLORS[entry.name] ?? PALETTE[2]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<DarkTooltip />} />
-                  <Legend
-                    formatter={(v) => (
-                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
-                    )}
-                    iconType="circle" iconSize={8}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : <EmptyState message="Loading…" />}
-          </ChartCard>
-
-          {/* Event type pie */}
-          <ChartCard title="Event Type Breakdown" subtitle="Which actions visitors take most">
-            {activityLoading ? (
-              <EmptyState message="Fetching live data…" />
-            ) : activity?.events.length ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart>
-                  <Pie data={activity.events} dataKey="value" nameKey="name"
-                    cx="50%" cy="50%" outerRadius={80} labelLine={false} label={PieLabel}>
-                    {activity.events.map((_, i) => (
-                      <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<DarkTooltip />} />
-                  <Legend
-                    formatter={(v) => (
-                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
-                    )}
-                    iconType="circle" iconSize={8}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState message="No interaction events yet. Start exploring to generate data." />
-            )}
-          </ChartCard>
-        </div>
-
-        {/* ── Row 2: Activity over time (area chart) ── */}
+        {/* Activity area chart — full width */}
         <div className="mb-6">
           <ChartCard title="Activity Over the Last 14 Days" subtitle="Total interaction events per day">
             {activityLoading ? (
@@ -249,39 +205,280 @@ export default function Stats() {
           </ChartCard>
         </div>
 
-        {/* ── Row 3: Top selected artworks + yearly output ── */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Funnel + event pie — 2 col */}
+        <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-          {/* Top selected artworks */}
-          <ChartCard title="Most Selected Artworks" subtitle="Top 10 by selection events from visitors">
+          {/* Engagement funnel as horizontal bar */}
+          <ChartCard title="User Journey Funnel" subtitle="From viewing frames → saving a curation">
             {activityLoading ? (
               <EmptyState message="Fetching live data…" />
-            ) : activity?.topArtworks.length ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={activity.topArtworks} layout="vertical"
-                  margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
+            ) : activity?.funnelSteps.some(s => s.value > 0) ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={activity.funnelSteps} layout="vertical"
+                  margin={{ top: 0, right: 16, left: 16, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border)/0.3)" />
                   <XAxis type="number" allowDecimals={false}
                     tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
-                  <YAxis type="category" dataKey="title" width={110}
+                  <YAxis type="category" dataKey="name" width={120}
                     tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
                   <Tooltip content={<DarkTooltip />} />
-                  <Bar dataKey="selections" name="Selections" radius={[0, 3, 3, 0]}>
-                    {activity.topArtworks.map((_, i) => (
+                  <Bar dataKey="value" name="Users" radius={[0, 3, 3, 0]}>
+                    {activity.funnelSteps.map((_, i) => (
                       <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyState message="No artwork selections recorded yet. Start curating!" />
+              <EmptyState message="No funnel data yet. Start exploring to generate events." />
             )}
           </ChartCard>
 
-          {/* Artworks by creation year — Bar */}
+          {/* Event type pie */}
+          <ChartCard title="Event Type Breakdown" subtitle="Which actions visitors take most">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.events.length ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={activity.events} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" outerRadius={75} labelLine={false} label={PieLabel}>
+                    {activity.events.map((_, i) => (
+                      <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DarkTooltip />} />
+                  <Legend
+                    formatter={(v) => (
+                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
+                    )}
+                    iconType="circle" iconSize={8}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState message="No interaction events yet. Start exploring to generate data." />
+            )}
+          </ChartCard>
+        </div>
+
+        {/* ══ SECTION 2: Artwork Selection Insights ══════════════ */}
+        <SectionHeader title="Artwork Selection Insights" subtitle="Which artworks users pick, deselect, and keep" />
+
+        {/* Visual artwork grid */}
+        <div className="mb-6">
+          <ChartCard title="Most Selected Artworks" subtitle="Top 12 — rank badge / hover shows selections & retention">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.topArtworks.length ? (
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                {activity.topArtworks.map((art, i) => (
+                  <div key={art.id} className="group relative overflow-hidden rounded-sm border border-border/40">
+                    {art.imageUrl ? (
+                      <img
+                        src={art.imageUrl}
+                        alt={art.title}
+                        className="h-28 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-28 items-center justify-center bg-muted/30 text-muted-foreground text-xs px-1 text-center">
+                        {art.title}
+                      </div>
+                    )}
+                    {/* Rank badge */}
+                    <span
+                      className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black"
+                      style={{ background: i === 0 ? "#fbbf24" : i === 1 ? "#94a3b8" : i === 2 ? "#c9a96e" : "#1e293b", color: i < 3 ? "#000" : "#fff" }}
+                    >
+                      {i + 1}
+                    </span>
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-end bg-black/70 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <p className="text-center font-body text-[9px] text-white/80 leading-tight mb-1 line-clamp-2">{art.title}</p>
+                      <p className="font-body text-[10px] text-white">{art.selections} sel.</p>
+                      <div className="mt-1 h-1 w-full rounded-full bg-white/20">
+                        <div
+                          className="h-1 rounded-full"
+                          style={{ width: `${art.retentionPct}%`, background: art.retentionPct > 70 ? "#4ade80" : art.retentionPct > 40 ? "#fbbf24" : "#f87171" }}
+                        />
+                      </div>
+                      <p className="mt-0.5 font-body text-[9px]" style={{ color: art.retentionPct > 70 ? "#4ade80" : "#fbbf24" }}>
+                        {art.retentionPct}% kept
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState message="No artwork selections recorded yet. Start curating!" />
+            )}
+          </ChartCard>
+        </div>
+
+        {/* Theme popularity + retention rate — 2 col */}
+        <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+          <ChartCard title="Theme Popularity by Selections" subtitle="Which themes users gravitate towards when curating">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.themePopularity.length ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={activity.themePopularity} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.3)" />
+                  <XAxis dataKey="theme" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <Tooltip content={<DarkTooltip />} />
+                  <Bar dataKey="selections" name="Selections" radius={[3, 3, 0, 0]}>
+                    {activity.themePopularity.map((entry) => (
+                      <Cell key={entry.theme} fill={THEME_COLORS[entry.theme] ?? PALETTE[0]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState message="No theme selection data yet." />
+            )}
+          </ChartCard>
+
+          <ChartCard title="Artwork Retention Rate" subtitle="% of selections not immediately reversed (kept in curation)">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.topArtworks.length ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={activity.topArtworks.slice(0, 10)} layout="vertical"
+                  margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border)/0.3)" />
+                  <XAxis type="number" domain={[0, 100]} unit="%" allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <YAxis type="category" dataKey="title" width={110}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <Tooltip content={<DarkTooltip />} />
+                  <Bar dataKey="retentionPct" name="Retention %" radius={[0, 3, 3, 0]}>
+                    {activity.topArtworks.slice(0, 10).map((art) => (
+                      <Cell key={art.id} fill={art.retentionPct > 70 ? "#4ade80" : art.retentionPct > 40 ? "#fbbf24" : "#f87171"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState message="No retention data yet." />
+            )}
+          </ChartCard>
+        </div>
+
+        {/* ══ SECTION 3: Frame & Curation Behaviour ══════════════ */}
+        <SectionHeader title="Frame & Curation Behaviour" subtitle="How users arrange frames and choose layout sizes" />
+
+        <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+          {/* Frame count preference pie */}
+          <ChartCard title="Frame Count Preference" subtitle="How many frames users choose when building their wall">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.frameCountChart.length ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={activity.frameCountChart} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" outerRadius={80} labelLine={false} label={PieLabel}>
+                    {activity.frameCountChart.map((_, i) => (
+                      <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DarkTooltip />} />
+                  <Legend
+                    formatter={(v) => (
+                      <span className="font-body text-xs text-muted-foreground">{v}</span>
+                    )}
+                    iconType="circle" iconSize={8}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState message="No frame count data yet. Users need to proceed past artwork selection." />
+            )}
+          </ChartCard>
+
+          {/* Most rearranged frames */}
+          <ChartCard title="Most Rearranged Frames" subtitle="Frames dragged most often during wall customisation">
+            {activityLoading ? (
+              <EmptyState message="Fetching live data…" />
+            ) : activity?.mostMovedFrames.length ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={activity.mostMovedFrames} layout="vertical"
+                  margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border)/0.3)" />
+                  <XAxis type="number" allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <YAxis type="category" dataKey="frame" width={120}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
+                  <Tooltip content={<DarkTooltip />} />
+                  <Bar dataKey="moves" name="Rearrangements" radius={[0, 3, 3, 0]}>
+                    {activity.mostMovedFrames.map((_, i) => (
+                      <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState message="No rearrangement data yet. Drag frames on the Play page to generate events." />
+            )}
+          </ChartCard>
+        </div>
+
+        {/* ══ SECTION 4: Collection Overview ═════════════════════ */}
+        <SectionHeader title="Collection Overview" subtitle="Static breakdown of the 48-artwork Curatura collection" />
+
+        {/* Three pies row */}
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+          <ChartCard title="Artworks by Theme" subtitle="Collection breakdown across 6 thematic walls">
+            {collection?.themes.length ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={collection.themes} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" outerRadius={80} labelLine={false} label={PieLabel}>
+                    {collection.themes.map((entry) => (
+                      <Cell key={entry.name} fill={THEME_COLORS[entry.name] ?? PALETTE[0]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DarkTooltip />} />
+                  <Legend
+                    formatter={(v) => (
+                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
+                    )}
+                    iconType="circle" iconSize={8}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <EmptyState message="Loading…" />}
+          </ChartCard>
+
+          <ChartCard title="Aspect Ratio Mix" subtitle="Portrait / landscape / square split">
+            {collection?.aspectRatios.length ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={collection.aspectRatios} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" innerRadius={50} outerRadius={85}
+                    paddingAngle={4} labelLine={false} label={PieLabel}>
+                    {collection.aspectRatios.map((entry) => (
+                      <Cell key={entry.name} fill={ASPECT_COLORS[entry.name] ?? PALETTE[2]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DarkTooltip />} />
+                  <Legend
+                    formatter={(v) => (
+                      <span className="font-body text-xs text-muted-foreground capitalize">{v}</span>
+                    )}
+                    iconType="circle" iconSize={8}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <EmptyState message="Loading…" />}
+          </ChartCard>
+
           <ChartCard title="Artworks by Year" subtitle="Collection output across 2018 – 2022">
             {collection?.byYear.length ? (
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={collection.byYear} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.3)" />
                   <XAxis dataKey="year" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontFamily: "inherit" }} />
@@ -298,7 +495,7 @@ export default function Stats() {
           </ChartCard>
         </div>
 
-        {/* ── Row 4: Theme radar ── */}
+        {/* Theme radar — full width */}
         <div className="mb-6">
           <ChartCard title="Theme Radar" subtitle="Visual balance of the collection across all themes">
             {collection?.themes.length ? (
@@ -318,3 +515,4 @@ export default function Stats() {
     </div>
   );
 }
+
