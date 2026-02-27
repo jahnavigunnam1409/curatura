@@ -383,36 +383,12 @@ export const curatedWalls: CuratedWall[] = [
     title: "Echoes of Solitude",
     curator: "Gallery Curatura",
     frames: [
-      {
-        id: "frame-1",
-        title: "Introspection",
-        artworkIds: ["art-1", "art-2", "art-3", "art-4", "art-5", "art-6", "art-7", "art-8"],
-      },
-      {
-        id: "frame-2",
-        title: "Horizons",
-        artworkIds: ["art-9", "art-10", "art-11", "art-12", "art-13", "art-14", "art-15", "art-16"],
-      },
-      {
-        id: "frame-3",
-        title: "Nature's Whisper",
-        artworkIds: ["art-17", "art-18", "art-19", "art-20", "art-21", "art-22", "art-23", "art-24"],
-      },
-      {
-        id: "frame-4",
-        title: "Hidden Light",
-        artworkIds: ["art-25", "art-26", "art-27", "art-28", "art-29", "art-30", "art-31", "art-32"],
-      },
-      {
-        id: "frame-5",
-        title: "The Void Speaks",
-        artworkIds: ["art-33", "art-34", "art-35", "art-36", "art-37", "art-38", "art-39", "art-40"],
-      },
-      {
-        id: "frame-6",
-        title: "Bloom & Decay",
-        artworkIds: ["art-41", "art-42", "art-43", "art-44", "art-45", "art-46", "art-47", "art-48"],
-      },
+      { id: "frame-1", title: "Introspection",    artworkIds: ["art-1",  "art-2",  "art-3"]  },
+      { id: "frame-2", title: "Horizons",          artworkIds: ["art-9",  "art-10", "art-11"] },
+      { id: "frame-3", title: "Nature's Whisper",  artworkIds: ["art-17", "art-18", "art-19"] },
+      { id: "frame-4", title: "Hidden Light",      artworkIds: ["art-25", "art-26", "art-27"] },
+      { id: "frame-5", title: "The Void Speaks",   artworkIds: ["art-33", "art-34", "art-35"] },
+      { id: "frame-6", title: "Bloom & Decay",     artworkIds: ["art-41", "art-42", "art-43"] },
     ],
   },
 ];
