@@ -189,11 +189,17 @@ export function useActivityStats() {
   });
 }
 
-// ── Total curations saved ─────────────────────────────────────
+// ── Total curations saved (global — all users via security-definer RPC) ───────
 export function useCurationCount() {
   return useQuery({
     queryKey: ["stats", "curations"],
     queryFn: async () => {
+      // Try the security-definer RPC first (returns all curations regardless of RLS)
+      const { data: rpcData, error: rpcError } = await rawDb
+        .rpc("get_total_curation_count");
+      if (!rpcError && rpcData != null) return Number(rpcData);
+
+      // Fallback: direct count (may be limited by RLS to current user's curations)
       const { count, error } = await rawDb
         .from("curations")
         .select("id", { count: "exact", head: true });
