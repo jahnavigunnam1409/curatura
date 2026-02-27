@@ -50,6 +50,50 @@
     --shadow-frame: 0 4px 30px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(38 50% 58% / 0.08);
     --shadow-card: 0 8px 40px hsl(0 0% 0% / 0.4);
   }
+
+  /* ── Light theme ───────────────────────────────────────── */
+  .light {
+    --background: 40 30% 96%;
+    --foreground: 25 20% 14%;
+
+    --card: 40 22% 91%;
+    --card-foreground: 25 20% 14%;
+
+    --popover: 40 22% 91%;
+    --popover-foreground: 25 20% 14%;
+
+    --primary: 38 55% 40%;
+    --primary-foreground: 40 30% 97%;
+
+    --secondary: 40 18% 86%;
+    --secondary-foreground: 25 18% 22%;
+
+    --muted: 40 14% 83%;
+    --muted-foreground: 25 12% 42%;
+
+    --accent: 145 20% 36%;
+    --accent-foreground: 40 30% 97%;
+
+    --destructive: 0 65% 44%;
+    --destructive-foreground: 40 30% 97%;
+
+    --border: 38 22% 74%;
+    --input: 38 22% 74%;
+    --ring: 38 55% 40%;
+
+    --sidebar-background: 40 18% 88%;
+    --sidebar-foreground: 25 18% 22%;
+    --sidebar-primary: 38 55% 40%;
+    --sidebar-primary-foreground: 40 30% 97%;
+    --sidebar-accent: 40 16% 84%;
+    --sidebar-accent-foreground: 25 18% 22%;
+    --sidebar-border: 38 18% 70%;
+    --sidebar-ring: 38 55% 40%;
+
+    --gold-glow: 0 0 40px hsl(38 55% 40% / 0.18);
+    --shadow-frame: 0 4px 24px hsl(0 0% 0% / 0.10), inset 0 1px 0 hsl(38 50% 58% / 0.12);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.07);
+  }
 }
 
 @layer base {
@@ -94,6 +138,10 @@
 
   .gallery-gradient {
     background: linear-gradient(180deg, hsl(30 8% 7% / 0) 0%, hsl(30 8% 7%) 100%);
+  }
+
+  .light .gallery-gradient {
+    background: linear-gradient(180deg, hsl(40 30% 96% / 0) 0%, hsl(40 30% 96%) 100%);
   }
 
   .gold-gradient-text {

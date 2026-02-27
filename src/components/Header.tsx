@@ -1,19 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, Sun, Moon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 
 const Header = () => {
   const location = useLocation();
   const { user, profile, loading, signInWithGoogle, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { path: "/", label: "Home" },
-    { path: "/play", label: "Explore Curations" },
+    { path: "/play", label: "Explore" },
     { path: "/create", label: "Create" },
+    { path: "/my-curations", label: "My Curations" },
     { path: "/stats", label: "Statistics" },
   ];
 
@@ -62,7 +65,16 @@ const Header = () => {
         </nav>
 
         {/* Auth area */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="flex h-8 w-8 items-center justify-center rounded-sm border border-border/50 bg-card/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
           {loading ? (
             <div className="h-8 w-20 animate-pulse rounded-sm bg-secondary" />
           ) : user ? (
