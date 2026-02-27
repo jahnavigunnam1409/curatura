@@ -13,9 +13,6 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Hide header on login page
-  if (location.pathname === "/login") return null;
-
   const navItems = [
     { path: "/", label: "Home" },
     { path: "/play", label: "Explore" },
@@ -24,7 +21,7 @@ const Header = () => {
     { path: "/stats", label: "Statistics" },
   ];
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click — must be called unconditionally
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -37,6 +34,9 @@ const Header = () => {
 
   const displayName = profile?.display_name ?? user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User";
   const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? null;
+
+  // Hide header on login page (after all hooks)
+  if (location.pathname === "/login") return null;
 
   return (
     <motion.header
