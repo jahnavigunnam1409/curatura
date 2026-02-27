@@ -2,8 +2,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-gallery.jpg";
+import { useTheme } from "@/hooks/useTheme";
 
 const Index = () => {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Hero Background */}
@@ -11,10 +15,11 @@ const Index = () => {
         <img
           src={heroImage}
           alt="Gallery interior with warm golden lighting"
-          className="h-full w-full object-cover opacity-40"
+          className={`h-full w-full object-cover transition-opacity duration-500 ${isLight ? "opacity-55" : "opacity-40"}`}
         />
         <div className="gallery-gradient absolute inset-0" />
-        <div className="absolute inset-0 bg-background/30" />
+        {/* Tint overlay — subtle in light, richer in dark */}
+        <div className={`absolute inset-0 ${isLight ? "bg-amber-50/20" : "bg-background/30"}`} />
       </div>
 
       {/* Content */}
