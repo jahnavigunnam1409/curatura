@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import Header from "@/components/Header";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import PlayCurated from "./pages/PlayCurated";
 import CreateCuration from "./pages/CreateCuration";
 import MyCurations from "./pages/MyCurations";
@@ -26,6 +27,7 @@ const App = () => (
         <Header />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/play" element={<PlayCurated />} />
           <Route path="/create" element={<CreateCuration />} />
           <Route path="/my-curations" element={<MyCurations />} />
