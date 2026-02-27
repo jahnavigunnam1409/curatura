@@ -163,7 +163,7 @@ export default function Stats() {
               Gallery Statistics
             </h1>
             <p className="mt-2 font-body text-sm text-muted-foreground">
-              Aggregate insights across <span className="text-card-foreground font-medium">all visitors</span> — combined data from every session, curation, and interaction logged in Curatura.
+              Aggregate insights from <span className="text-[#c9a96e] font-medium">all visitors</span> — combined selections, curations, and interactions across the entire platform.
             </p>
           </div>
           <button
@@ -179,15 +179,15 @@ export default function Stats() {
         {/* ── 6 Stat cards ── */}
         <div className="mb-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard icon={Image}      label="Total Artworks"  value={collection?.total ?? 48}          color="#c9a96e" />
-          <StatCard icon={Activity}   label="Total Events"    value={activity?.totalEvents ?? 0}        color="#818cf8" sub="all users combined" />
-          <StatCard icon={Users}      label="Unique Users"    value={activity?.uniqueUsers ?? 0}        color="#38bdf8" sub="distinct visitors" />
+          <StatCard icon={Activity}   label="Total Events"    value={activity?.totalEvents ?? 0}        color="#818cf8" sub="interaction logs" />
+          <StatCard icon={Users}      label="Unique Users"    value={activity?.uniqueUsers ?? 0}        color="#38bdf8" sub="tracked sessions" />
           <StatCard icon={Layers}     label="Curations Saved" value={curationCount ?? 0}                color="#4ade80" />
           <StatCard icon={Palette}    label="Top Theme"       value={topTheme}                          color="#f472b6" sub={`${collection?.themes.find(t => t.name === topTheme)?.value ?? 0} artworks`} />
           <StatCard icon={TrendingUp} label="Frame Remixes"   value={activity?.frameRemixes ?? 0}      color="#fb923c" sub="rearrangements" />
         </div>
 
         {/* ══ SECTION 1: Live User Activity ══════════════════════ */}
-        <SectionHeader title="Live User Activity" subtitle="Combined interaction events logged across every visitor session" />
+        <SectionHeader title="Live User Activity" subtitle="Combined interaction logs from all visitors across the platform" />
 
         {/* Activity area chart — full width */}
         <div className="mb-6">
@@ -273,7 +273,7 @@ export default function Stats() {
         </div>
 
         {/* ══ SECTION 2: Artwork Selection Insights ══════════════ */}
-        <SectionHeader title="Artwork Selection Insights" subtitle="Which artworks all users pick, deselect, and keep — ranked by total community selections" />
+        <SectionHeader title="Artwork Selection Insights" subtitle="Which artworks all users pick, deselect, and keep — platform-wide" />
 
         {/* Visual artwork grid */}
         <div className="mb-6">
@@ -377,7 +377,7 @@ export default function Stats() {
         </div>
 
         {/* ══ SECTION 3: Frame & Curation Behaviour ══════════════ */}
-        <SectionHeader title="Frame & Curation Behaviour" subtitle="How all users arrange frames, choose layout sizes, and remix walls — across every session" />
+        <SectionHeader title="Frame & Curation Behaviour" subtitle="How all users arrange frames and choose layout sizes — aggregated" />
 
         <div className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
